@@ -1,4 +1,4 @@
-#Initializing our (empty) blockchain list
+# Initializing our (empty) blockchain list
 genesis_block = {
     'previous_hash': '',
     'index': 0,
@@ -7,6 +7,7 @@ genesis_block = {
 blockchain = [genesis_block]
 open_transactions = []
 owner = 'Fred'
+participants = {owner}      # set
 
 
 def hash_block(block):
@@ -28,11 +29,14 @@ def add_transaction(recipient, sender=owner, amount=1.0):
         :amount: The amount of coins sent with the transaction (default = 1.0)
     """
     transaction = {
-        'sender': sender, 
-        'recipient': recipient, 
+        'sender': sender,
+        'recipient': recipient,
         'amount': amount
     }
     open_transactions.append(transaction)
+    participants.add(sender)
+    participants.add(recipient)
+
 
 def mine_block():
     last_block = blockchain[-1]
@@ -44,6 +48,7 @@ def mine_block():
         'transactions': open_transactions
     }
     blockchain.append(block)
+
 
 def get_transaction_value():
     tx_recipient = input('Enter the recipient of the transaction: ')
@@ -82,6 +87,7 @@ while waiting_for_input:
     print('1: Add a new transaction value')
     print('2: Mine a new block')
     print('3: Output the blockchain blocks')
+    print('4: Output participants')
     print('h: Manipulate the chain')
     print('q: Quit')
     user_choice = get_user_choice()
@@ -95,6 +101,8 @@ while waiting_for_input:
         mine_block()
     elif user_choice == '3':
         print_blockchain_element()
+    elif user_choice == '4':
+        print(participants)
     elif user_choice == 'h':
         if len(blockchain) >= 1:
             blockchain[0] = {
@@ -103,7 +111,7 @@ while waiting_for_input:
                 'transactions': [{'sender': 'fred', 'recipient': 'fred', 'amount': 100}]
             }
     elif user_choice == 'q':
-        waiting_for_input = False   
+        waiting_for_input = False
     else:
         print('Input was invalid, please pick a value from the list!')
 
