@@ -1,6 +1,7 @@
 import functools
 import hashlib as hl
 import json
+from collections import OrderedDict
 
 # Initializing our (empty) blockchain list
 MINING_REWARD = 10
@@ -23,7 +24,7 @@ def hash_block(block):
     Arguments:
         :block: The block that should be hashed.
     """
-    return hl.sha256(json.dumps(block).encode()).hexdigest()
+    return hl.sha256(json.dumps(block, sort_keys=True).encode()).hexdigest()    # the order of the keys in dictionary is important in hashing
 
 
 def valid_proof(transactions, last_hash, proof):
@@ -82,11 +83,12 @@ def add_transaction(recipient, sender=owner, amount=1.0):
         :recipient: The recipient of the coins.
         :amount: The amount of coins sent with the transaction (default = 1.0)
     """
-    transaction = {
-        'sender': sender,
-        'recipient': recipient,
-        'amount': amount
-    }
+    # transaction = {
+    #     'sender': sender,
+    #     'recipient': recipient,
+    #     'amount': amount
+    # }
+    transaction = OrderedDict([('sender', sender), ('recipient', recipient), ('amount', amount)])
 
     if verify_transaction(transaction):
         open_transactions.append(transaction)
@@ -103,11 +105,12 @@ def mine_block():
     hashed_block = hash_block(last_block)    
     proof = proof_of_work()
     # Miners should be rewarded, so let's create a reward transaction
-    reward_transaction = {
-        'sender': 'MINING',
-        'recipient': owner,
-        'amount': MINING_REWARD
-    }
+    # reward_transaction = {
+    #     'sender': 'MINING',
+    #     'recipient': owner,
+    #     'amount': MINING_REWARD
+    # }
+    reward_transaction = OrderedDict([('sender', 'MINING'), ('recipient', owner), ('amount', MINING_REWARD)])
     # Cope transaction instead of manipulating the original open_transactions
     # This ensures that if for some reason the mining should fail, we don't include the reward_transaction
     # create copied_transactions in case mine_block() failed and the reward_transaction should not be included in the open_transactions
