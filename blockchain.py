@@ -8,7 +8,8 @@ MINING_REWARD = 10
 genesis_block = {
     'previous_hash': '',
     'index': 0,
-    'transactions': []
+    'transactions': [],
+    'proof': 100        # dummy value
 }
 blockchain = [genesis_block]
 open_transactions = []
@@ -27,7 +28,7 @@ def hash_block(block):
 
 def valid_proof(transactions, last_hash, proof):
     guess = (str(transactions) + str(last_hash) + str(proof)).encode()
-    guess_hash = hl.sha256(guess).hexdigest()       #to get a valid string
+    guess_hash = hl.sha256(guess).hexdigest()       # to get a valid string
     print(guess_hash)
     return guess_hash[0:2] == '00'
 
@@ -95,21 +96,28 @@ def add_transaction(recipient, sender=owner, amount=1.0):
     return False
 
 def mine_block():
+    """Create a new block and add open transactions to it."""
+    # Fetch the currently last block of the blockchain
     last_block = blockchain[-1]
-    hashed_block = hash_block(last_block)
-    print(hashed_block)
+    # Hash the last block (=> to be able to compare it to the stored hash val)
+    hashed_block = hash_block(last_block)    
+    proof = proof_of_work()
+    # Miners should be rewarded, so let's create a reward transaction
     reward_transaction = {
         'sender': 'MINING',
         'recipient': owner,
         'amount': MINING_REWARD
     }
+    # Cope transaction instead of manipulating the original open_transactions
+    # This ensures that if for some reason the mining should fail, we don't include the reward_transaction
     # create copied_transactions in case mine_block() failed and the reward_transaction should not be included in the open_transactions
     copied_transactions = open_transactions[:]
     copied_transactions.append(reward_transaction)
     block = {
         'previous_hash': hashed_block,
         'index': len(blockchain),
-        'transactions': copied_transactions
+        'transactions': copied_transactions,
+        'proof': proof
     }
     blockchain.append(block)
     return True
@@ -141,6 +149,9 @@ def verify_chain():
         if index == 0:
             continue
         if block['previous_hash'] != hash_block(blockchain[index - 1]):
+            return False
+        if not valid_proof(block['transactions'][:-1], block['previous_hash'], block['proof']):
+            print('Proof of work is invalid')
             return False
     return True
 
